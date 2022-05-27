@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mac="aa:bb:cc:dd:ee:ff"
-interfaces=$(netstat -i | awk '{print $1}' | egrep -v "^Kernel$|^Iface$|^ib0|^lo$|^br-|^docker")
+interfaces=$(ifconfig 2>&1 | egrep ^[a-z0-9]+:  | cut -d: -f1 | awk '{print $1}' | egrep -v "^Kernel$|^Iface$|^ib0|^lo$|^br-|^docker")
 
 FAKE_MAC=
 for name in $interfaces; do

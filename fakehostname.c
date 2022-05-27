@@ -2,14 +2,6 @@
 // Downloaded from: https://gist.github.com/MarisElsins/5e476327640dceb0f1a612267e09d89b
 // gcc -fPIC -shared -Wl,-soname,libfakehostname.so -ldl -o libfakehostname.so fakehostname.c
 
-/*
-[wang@cs001 ~]$ LD_PRELOAD=/home/wang/fake/fakehostname/libfakehostname.so FAKE_HOSTNAME=myfakehostname.domain.com hostname 
-myfakehostname.domain.com
-[wang@cs001 ~]$ LD_PRELOAD=/home/wang/fake/fakehostname/libfakehostname.so FAKE_HOSTNAME=myfakehostname.domain.com uname -a
-Linux myfakehostname.domain.com 4.18.0-305.28.1.el8_4.x86_64 #1 SMP Mon Nov 8 07:45:47 EST 2021 x86_64 x86_64 x86_64 GNU/Linux
-[wang@cs001 ~]$ 
-*/
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

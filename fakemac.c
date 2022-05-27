@@ -3,26 +3,6 @@
 // https://gist.github.com/MarisElsins/5e476327640dceb0f1a612267e09d89b
 // gcc -fPIC -shared -Wl,-soname,libfakemac.so -ldl -o libfakemac.so fakemac.c
 
-/*
-[wang@cs001 fakehostname]$ ifconfig eno1
-eno1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
-        ether 8c:0f:6f:60:06:77  txqueuelen 1000  (Ethernet)
-        RX packets 0  bytes 0 (0.0 B)
-        RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 0  bytes 0 (0.0 B)
-        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
-
-[wang@cs001 fakehostname]$ LD_PRELOAD=libfakemac.so FAKE_MAC="eno1=8c:0f:6f:60:06:88" ifconfig eno1
-eno1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
-        ether 8c:0f:6f:60:06:88  txqueuelen 1000  (Ethernet)
-        RX packets 0  bytes 0 (0.0 B)
-        RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 0  bytes 0 (0.0 B)
-        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
-
-[wang@cs001 fakehostname]$ 
-*/
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

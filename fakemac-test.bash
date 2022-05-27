@@ -9,6 +9,6 @@ for name in $interfaces; do
 done
 export FAKE_MAC
 
-export LD_PRELOAD="libfakemac.so"
+export LD_PRELOAD="./libfakemac.so"
 
 ifconfig

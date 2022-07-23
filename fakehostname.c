@@ -17,7 +17,7 @@
 
 #define ENV_VARNAME_FAKE_HOSTNAME "FAKE_HOSTNAME"
 
-typedef int (*uname_t) (struct utsname * buf);
+typedef int (*uname_t) (struct utsname *buf);
 typedef int (*gethostname_t)(char *name, size_t len);
 
 static bool error_is_printed = false;

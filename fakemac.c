@@ -13,10 +13,18 @@
 #include <stdbool.h>
 
 #include <sys/socket.h>
-#include <linux/if.h>
+//#include <linux/if.h>
 #include <netdb.h>
 #include <assert.h>
 #include <linux/sockios.h>
+
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <linux/if_packet.h>
+#include <linux/if_link.h>
+#include <net/if.h>
+#include <errno.h>
 
 #ifndef RTLD_NEXT
 #define RTLD_NEXT ((void *) -1l)
@@ -25,8 +33,13 @@
 #define ENV_VARNAME_FAKE_MAC "FAKE_MAC"
 
 typedef int (*ioctl_t)(int __fd, unsigned long __request, struct ifreq *s);
+static ioctl_t __original_ioctl = NULL;
 
-static ioctl_t __orig_ioctl = NULL;
+typedef int (*getifaddrs_t)(struct ifaddrs **);
+static getifaddrs_t __original_getifaddrs = NULL;
+
+typedef void (*freeifaddrs_t)(struct ifaddrs *);
+static freeifaddrs_t __original_freeifaddrs = NULL;
 
 #define MAX_FAKE_MAC_ADDRESSES 64
 static int n_fake_mac_addresses = 0;
@@ -86,9 +99,9 @@ SIOCGIFHWADDR, SIOCSIFHWADDR
 
 int ioctl(int fd, unsigned long request, struct ifreq *s)
 {
-  if(!__orig_ioctl) __orig_ioctl = (ioctl_t) get_lib_function("ioctl");
+  if(!__original_ioctl) __original_ioctl = (ioctl_t) get_lib_function("ioctl");
 
-  int ret_val = __orig_ioctl(fd, request, s);
+  int ret_val = __original_ioctl(fd, request, s);
 
   if(request == SIOCGIFHWADDR) {
     initialize_fake_mac_addesses();
@@ -102,4 +115,50 @@ int ioctl(int fd, unsigned long request, struct ifreq *s)
   }
 
   return ret_val;  
+}
+
+int getifaddrs(struct ifaddrs **ifap) {
+
+  if(!__original_getifaddrs) __original_getifaddrs = (getifaddrs_t) get_lib_function("getifaddrs");
+
+  int result = __original_getifaddrs(ifap);
+  if (result != 0) {
+    perror("original getifaddrs");
+    return result;
+  }
+
+  struct ifaddrs *ifa = *ifap;
+  while(ifa) {
+    //printf("Interface: %s\n", ifa->ifa_name);
+
+    //Check for AF_INET (IPv4)
+    // if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET) {
+    //     struct sockaddr_in *addr = (struct sockaddr_in *)ifa->ifa_addr;
+    //     printf("  IPv4 Address: %s\n", inet_ntoa(addr->sin_addr));
+    // }
+
+    // Check for AF_PACKET (MAC address)
+    if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_PACKET) {
+      struct sockaddr_ll *s = (struct sockaddr_ll *) ifa->ifa_addr;
+      // printf("  MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n",
+      //        s->sll_addr[0], s->sll_addr[1], s->sll_addr[2],
+      //        s->sll_addr[3], s->sll_addr[4], s->sll_addr[5]);
+      initialize_fake_mac_addesses();
+      for(int i = 0; i < n_fake_mac_addresses; i++) {
+        if(!strcmp(fake_mac_addresses[i].name, ifa->ifa_name)) {
+          for(int j = 0; j < 6; j++) {
+            s->sll_addr[j] = fake_mac_addresses[i].address[j];
+          }
+        }
+      }
+    }
+    ifa = ifa->ifa_next;
+  }
+  return result;
+}
+
+// Custom freeifaddrs (needed for compatibility)
+void freeifaddrs(struct ifaddrs *ifa) {
+  if (!__original_freeifaddrs) __original_freeifaddrs = (freeifaddrs_t) get_lib_function("freeifaddrs");
+  __original_freeifaddrs(ifa);
 }
